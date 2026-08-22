@@ -1,7 +1,7 @@
-streamlit==1.28.0
-pandas==2.0.3
-openpyxl==3.1.2
-python-pptx==0.6.21
-matplotlib==3.7.2
-Pillow==10.0.0
-numpy==1.24.3
+streamlit
+pandas
+openpyxl
+python-pptx
+matplotlib
+Pillow
+numpy>=1.26.0
