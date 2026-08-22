@@ -1,33 +1,11 @@
 from io import BytesIO
 from pptx import Presentation
 from pptx.util import Inches, Pt
-from pptx.dml.color import RGBColor
-import os
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+import pandas as pd
 from utils.chart_generator import create_chart
 
 
-def get_logo_image():
-    """Récupère l'image du logo"""
-    logo_paths = [
-        "logo_segula.png",
-        "logo_segula.jpg",
-        "logo_segula.jpeg",
-        "logo.png",
-    ]
-    
-    for path in logo_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, "rb") as f:
-                    return BytesIO(f.read())
-            except:
-                continue
-    return None
-
-
-def create_pptx(pivot_table, output_path):
+def create_pptx(pivot_table, output_buffer):
     """
     Crée un PowerPoint avec les graphiques
     """
@@ -36,19 +14,25 @@ def create_pptx(pivot_table, output_path):
     prs.slide_height = Inches(7.5)
     
     # ============================================================
-    # SLIDE 1 : Logo Segula
+    # SLIDE 1 : Titre
     # ============================================================
     slide_layout = prs.slide_layouts[6]
     slide = prs.slides.add_slide(slide_layout)
     
-    # Logo
-    logo_buffer = get_logo_image()
-    if logo_buffer:
-        try:
-            slide.shapes.add_picture(logo_buffer, Inches(0), Inches(0),
-                                     width=prs.slide_width, height=prs.slide_height)
-        except:
-            pass
+    # Titre
+    title = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(10), Inches(1.5))
+    title_frame = title.text_frame
+    title_frame.text = "Tableau de bord des projets"
+    title_frame.paragraphs[0].font.size = Pt(48)
+    title_frame.paragraphs[0].font.bold = True
+    title_frame.paragraphs[0].alignment = 1
+    
+    # Sous-titre
+    subtitle = slide.shapes.add_textbox(Inches(1), Inches(4), Inches(10), Inches(1))
+    subtitle_frame = subtitle.text_frame
+    subtitle_frame.text = "SEGULA Technologies"
+    subtitle_frame.paragraphs[0].font.size = Pt(32)
+    subtitle_frame.paragraphs[0].alignment = 1
     
     # ============================================================
     # SLIDE 2 : Graphique global
@@ -82,7 +66,7 @@ def create_pptx(pivot_table, output_path):
     # Créer le graphique
     chart_buffer = create_chart(total_values, "Répartition des statuts - Tous les projets", categories)
     
-    # Ajouter le graphique à la diapositive
+    # Ajouter le graphique
     slide.shapes.add_picture(chart_buffer, Inches(0.5), Inches(1.2), width=Inches(12))
     
     # ============================================================
@@ -113,14 +97,15 @@ def create_pptx(pivot_table, output_path):
         categories = [str(col) for col in project_data.index]
         values = []
         for col in categories:
-            values.append(int(project_data[col]) if pd.notna(project_data[col]) else 0)
+            val = project_data[col]
+            values.append(int(val) if pd.notna(val) else 0)
         
         # Créer le graphique
         chart_buffer = create_chart(values, f"Répartition des statuts - {project_name}", categories)
         
-        # Ajouter le graphique à la diapositive
+        # Ajouter le graphique
         slide.shapes.add_picture(chart_buffer, Inches(0.5), Inches(1.2), width=Inches(12))
     
-    # Sauvegarder
-    prs.save(output_path)
-    return output_path
+    # Sauvegarder dans le buffer
+    prs.save(output_buffer)
+    return output_buffer
